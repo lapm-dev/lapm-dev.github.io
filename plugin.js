@@ -8,99 +8,62 @@
         init: function() {
             Lampa.Listener.follow('app', function (e) {
                 if (e.type == 'ready') {
-                    ShikimoriPlugin.addSettings();
                     ShikimoriPlugin.addMenuButton();
                 }
             });
         },
 
-        addSettings: function() {
-            try {
-                Lampa.SettingsApi.addComponent({
-                    component: ShikimoriPlugin.component,
-                    name: 'Shikimori',
-                    icon: ShikimoriPlugin.icon
+        addMenuButton: function() {
+            var settingsMenu = Lampa.Settings.main().render();
+            
+            if (settingsMenu) {
+                var shikimoriButton = $('<div class="settings-folder selector" data-component="shikimori"><div class="settings-folder__icon">' + ShikimoriPlugin.icon + '</div><div class="settings-folder__name">Shikimori</div></div>');
+                
+                shikimoriButton.on('hover:enter', function(){
+                    ShikimoriPlugin.showSettings();
                 });
-
-                Lampa.SettingsApi.addParam({
-                    component: ShikimoriPlugin.component,
-                    param: {
-                        name: 'shikimori_client_id',
-                        type: 'input',
-                        default: ''
-                    },
-                    field: {
-                        name: 'Shikimori Client ID',
-                        description: Lampa.Lang.translate('filmix_param_placeholder')
-                    },
-                    onChange: function(value) {
-                        Lampa.Storage.set('shikimori_client_id', value);
-                    }
-                });
-
-                Lampa.SettingsApi.addParam({
-                    component: ShikimoriPlugin.component,
-                    param: {
-                        name: 'shikimori_client_secret',
-                        type: 'input',
-                        default: ''
-                    },
-                    field: {
-                        name: 'Shikimori Client Secret',
-                        description: Lampa.Lang.translate('filmix_param_placeholder')
-                    },
-                    onChange: function(value) {
-                        Lampa.Storage.set('shikimori_client_secret', value);
-                    }
-                });
-
-                Lampa.SettingsApi.addParam({
-                    component: ShikimoriPlugin.component,
-                    param: {
-                        name: 'shikimori_auth',
-                        type: 'static'
-                    },
-                    field: {
-                        name: Lampa.Lang.translate('filmix_params_add_device') + ' Shikimori',
-                        description: Lampa.Lang.translate('shikimori_auth_add_descr')
-                    },
-                    onRender: function(item) {
-                        item.on('hover:enter', function() {
-                            ShikimoriPlugin.authorize();
-                        });
-                    }
-                });
-            } catch (error) {
-                console.error('Error adding Shikimori settings:', error);
+                
+                settingsMenu.find('[data-component="more"]').before(shikimoriButton);
             }
         },
 
-        addMenuButton: function() {
-            try {
-                var settingsMenu = Lampa.Settings.main().render();
-                
-                if (settingsMenu) {
-                    var shikimoriButton = $('<div class="settings-folder selector" data-component="shikimori"><div class="settings-folder__icon">' + ShikimoriPlugin.icon + '</div><div class="settings-folder__name">Shikimori</div></div>');
-                    
-                    shikimoriButton.on('hover:enter', function(){
-    if (Lampa.Settings && typeof Lampa.Settings.create === 'function') {
-        try {
-            Lampa.Settings.create('shikimori');
-        } catch (error) {
-            console.error('Error creating Shikimori settings:', error);
-            Lampa.Noty.show('Error: Unable to open Shikimori settings');
-        }
-    } else {
-        console.error('Lampa.Settings.create is not available');
-        Lampa.Noty.show('Error: Settings creation is not available');
-    }
-});
-                    
-                    settingsMenu.find('[data-component="more"]').before(shikimoriButton);
+        showSettings: function() {
+            var modal = $('<div class="modal modal--medium modal--overlay"></div>');
+            var body = $('<div class="modal__body"></div>');
+            
+            var clientIdInput = $('<div class="settings-param"><div class="settings-param__name">Shikimori Client ID</div><input class="settings-param__input" type="text" value="' + (Lampa.Storage.get('shikimori_client_id') || '') + '"></div>');
+            var clientSecretInput = $('<div class="settings-param"><div class="settings-param__name">Shikimori Client Secret</div><input class="settings-param__input" type="text" value="' + (Lampa.Storage.get('shikimori_client_secret') || '') + '"></div>');
+            var authorizeButton = $('<div class="settings-param selector"><div class="settings-param__name">' + Lampa.Lang.translate('filmix_params_add_device') + ' Shikimori</div></div>');
+            
+            authorizeButton.on('hover:enter', function() {
+                ShikimoriPlugin.authorize();
+            });
+            
+            body.append(clientIdInput).append(clientSecretInput).append(authorizeButton);
+            modal.append(body);
+            
+            $('body').append(modal);
+            
+            Lampa.Controller.add('settings_shikimori',{
+                toggle: function(){
+                    Lampa.Controller.collectionSet(modal);
+                    Lampa.Controller.collectionFocus(false,modal);
+                },
+                up: function(){
+                    Lampa.Navigator.move('up');
+                },
+                down: function(){
+                    Lampa.Navigator.move('down');
+                },
+                back: function(){
+                    Lampa.Storage.set('shikimori_client_id', clientIdInput.find('input').val());
+                    Lampa.Storage.set('shikimori_client_secret', clientSecretInput.find('input').val());
+                    modal.remove();
+                    Lampa.Controller.toggle('settings_component');
                 }
-            } catch (error) {
-                console.error('Error adding Shikimori menu button:', error);
-            }
+            });
+            
+            Lampa.Controller.toggle('settings_shikimori');
         },
 
         authorize: function() {
@@ -193,5 +156,6 @@
         }
     });
 
+    window.plugin_shikimori_ready = true;
     ShikimoriPlugin.init();
 })();
