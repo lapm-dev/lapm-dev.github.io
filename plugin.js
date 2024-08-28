@@ -27,44 +27,24 @@
             }
         },
 
-        showSettings: function() {
-            var modal = $('<div class="modal modal--medium modal--overlay"></div>');
-            var body = $('<div class="modal__body"></div>');
-        
-            var clientIdInput = $('<div class="settings-param"><div class="settings-param__name">Shikimori Client ID</div><input class="settings-param__input" type="text" value="' + (Lampa.Storage.get('shikimori_client_id') || '') + '"></div>');
-            var clientSecretInput = $('<div class="settings-param"><div class="settings-param__name">Shikimori Client Secret</div><input class="settings-param__input" type="text" value="' + (Lampa.Storage.get('shikimori_client_secret') || '') + '"></div>');
-            var authorizeButton = $('<div class="settings-param selector"><div class="settings-param__name">' + Lampa.Lang.translate('filmix_params_add_device') + ' Shikimori</div></div>');
-        
-            authorizeButton.on('hover:enter', function() {
-                ShikimoriPlugin.authorize();
-            });
-        
-            body.append(clientIdInput).append(clientSecretInput).append(authorizeButton);
-            modal.append(body);
-        
-            $('body').append(modal);
-        
-            Lampa.Controller.add('settings_shikimori',{
-                toggle: function(){
-                    Lampa.Controller.collectionSet(modal);
-                    Lampa.Controller.collectionFocus(false,modal);
-                },
-                up: function(){
-                    Lampa.Navigator.move('up');
-                },
-                down: function(){
-                    Lampa.Navigator.move('down');
-                },
-                back: function(){
-                    Lampa.Storage.set('shikimori_client_id', clientIdInput.find('input').val());
-                    Lampa.Storage.set('shikimori_client_secret', clientSecretInput.find('input').val());
-                    modal.remove();
-                    Lampa.Controller.toggle('settings_component');
-                }
-            });
-        
-            Lampa.Controller.toggle('settings_shikimori');
-        },
+showSettings: function() {
+    var html = $('<div class="settings-folder">' +
+                 '<div class="settings-param"><div class="settings-param__name">Shikimori Client ID</div><input class="settings-param__input" type="text" id="shikimori_client_id"></div>' +
+                 '<div class="settings-param"><div class="settings-param__name">Shikimori Client Secret</div><input class="settings-param__input" type="text" id="shikimori_client_secret"></div>' +
+                 '<div class="settings-param selector" id="shikimori_auth"><div class="settings-param__name">' + Lampa.Lang.translate('filmix_params_add_device') + ' Shikimori</div></div>' +
+                 '</div>');
+
+    $('#shikimori_client_id', html).val(Lampa.Storage.get('shikimori_client_id') || '');
+    $('#shikimori_client_secret', html).val(Lampa.Storage.get('shikimori_client_secret') || '');
+
+    $('#shikimori_auth', html).on('hover:enter', function(){
+        ShikimoriPlugin.authorize();
+    });
+
+    Lampa.Settings.render().find('[data-component="more"]').after(html);
+
+    Lampa.Controller.toggle('settings_component');
+},
         authorize: function() {
             var client_id = Lampa.Storage.get('shikimori_client_id');
             if (!client_id) {
