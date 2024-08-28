@@ -40,7 +40,7 @@
         },
 
         addSettings: function() {
-            if (Lampa.Settings.main && Lampa.Settings.main().render) {
+            if (Lampa.Settings.main) {
                 var field = $("<div class='settings-folder selector' data-component='" + this.component + "'><div class='settings-folder__icon'>" + this.icon + "</div><div class='settings-folder__name'>" + this.name + "</div></div>");
                 Lampa.Settings.main().render().find('[data-component="more"]').after(field);
             }
