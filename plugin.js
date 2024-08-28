@@ -1,84 +1,166 @@
-(function() {
+(function(){
     'use strict';
 
-    function showInitializationPopup() {
-        // Create a simple modal using Lampa's components
-        var modal = $('<div class="modal modal--dropdown modal--init-message"></div>');
-        var message = $('<div class="modal__content">Shikimori plugin successfully initialized!</div>');
-        var closer = $('<div class="modal__closer"></div>');
+    function ShikimoriPlugin() {
+        var self = this;
 
-        modal.append(message);
-        modal.append(closer);
+        self.init = function() {
+            Lampa.Template.add('settings_shikimori', `
+                <div>
+                    <div class="settings-param">
+                        <div class="settings-param__name">Shikimori Client ID</div>
+                        <div class="settings-param__value"></div>
+                        <div class="settings-param__descr">Введите Client ID вашего приложения Shikimori</div>
+                    </div>
+                    <div class="settings-param">
+                        <div class="settings-param__name">Shikimori Client Secret</div>
+                        <div class="settings-param__value"></div>
+                        <div class="settings-param__descr">Введите Client Secret вашего приложения Shikimori</div>
+                    </div>
+                </div>
+            `);
 
-        // Add some basic styling
-        $('body').append(Lampa.Template.get('shikimori_init_style'));
+            Lampa.Settings.listener.follow('open', function (e) {
+                if (e.name == 'main') {
+                    const field = $(Lampa.Lang.translate(`
+                        <div class="settings-folder selector" data-component="shikimori">
+                            <div class="settings-folder__icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21.5 12C21.5 17.2467 17.2467 21.5 12 21.5C6.75329 21.5 2.5 17.2467 2.5 12C2.5 6.75329 6.75329 2.5 12 2.5C17.2467 2.5 21.5 6.75329 21.5 12Z" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M12 7V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="settings-folder__name">Shikimori</div>
+                        </div>
+                    `));
+                    e.body.find('[data-component="more"]').after(field);
+                }
+            });
 
-        // Add the modal to the body
-        $('body').append(modal);
+            Lampa.Settings.define('shikimori', {
+                component: 'shikimori',
+                template: 'settings_shikimori',
+                icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.5 12C21.5 17.2467 17.2467 21.5 12 21.5C6.75329 21.5 2.5 17.2467 2.5 12C2.5 6.75329 6.75329 2.5 12 2.5C17.2467 2.5 21.5 6.75329 21.5 12Z" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                name: 'Shikimori'
+            });
 
-        // Show the modal with a fade effect
-        setTimeout(function() {
-            modal.addClass('modal--full');
-        }, 100);
+            Lampa.Settings.register({
+                component: 'shikimori',
+                param: {
+                    client_id: {
+                        default: ''
+                    },
+                    client_secret: {
+                        default: ''
+                    }
+                },
+                onStart: function(){},
+                onRender: function(item){
+                    item.on('hover:enter', function(){
+                        Lampa.Input.edit({
+                            title: 'Введите ' + item.name,
+                            value: Lampa.Storage.get('shikimori_' + item.param),
+                            free: true,
+                            nosave: true
+                        }, function(new_value){
+                            Lampa.Storage.set('shikimori_' + item.param, new_value);
+                            item.update();
+                        });
+                    });
 
-        // Close on click anywhere
-        modal.on('click', function() {
-            modal.removeClass('modal--full');
-            setTimeout(function() {
-                modal.remove();
-            }, 300); // Matches the CSS transition time
-        });
+                    item.update = function(){
+                        item.find('.settings-param__value').text(Lampa.Storage.get('shikimori_' + item.param));
+                    };
+
+                    item.update();
+
+                    if (item.param === 'client_secret') {
+                        item.after($('<div class="settings-param selector" data-action="authorize"><div class="settings-param__name">Авторизоваться в Shikimori</div></div>'));
+                        item.on('hover:enter', function(){
+                            self.authorize();
+                        });
+                    }
+                }
+            });
+        }
+
+        self.authorize = function() {
+            var client_id = Lampa.Storage.get('shikimori_client_id');
+            if (!client_id) {
+                Lampa.Noty.show('Пожалуйста, введите Client ID в настройках Shikimori');
+                return;
+            }
+
+            var redirectUri = 'https://lampa.mx/shikimori-oauth';
+            var authUrl = 'https://shikimori.one/oauth/authorize' +
+                '?client_id=' + encodeURIComponent(client_id) +
+                '&redirect_uri=' + encodeURIComponent(redirectUri) +
+                '&response_type=code' +
+                '&scope=user_rates';
+
+            if (window.cordova) {
+                var ref = cordova.InAppBrowser.open(authUrl, '_blank', 'location=yes');
+                ref.addEventListener('loadstart', function(event) {
+                    if (event.url.indexOf(redirectUri) === 0) {
+                        ref.close();
+                        var code = self.getParameterByName('code', event.url);
+                        if (code) {
+                            self.getToken(code);
+                        }
+                    }
+                });
+            } else {
+                window.open(authUrl, '_blank');
+            }
+        }
+
+        self.getParameterByName = function(name, url) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        self.getToken = function(code) {
+            var client_id = Lampa.Storage.get('shikimori_client_id');
+            var client_secret = Lampa.Storage.get('shikimori_client_secret');
+            
+            if (!client_id || !client_secret) {
+                Lampa.Noty.show('Пожалуйста, введите Client ID и Client Secret в настройках Shikimori');
+                return;
+            }
+
+            $.ajax({
+                url: 'https://shikimori.one/oauth/token',
+                method: 'POST',
+                data: {
+                    grant_type: 'authorization_code',
+                    client_id: client_id,
+                    client_secret: client_secret,
+                    code: code,
+                    redirect_uri: 'https://lampa.mx/shikimori-oauth'
+                },
+                success: function(response) {
+                    Lampa.Storage.set('shikimori_token', response.access_token);
+                    Lampa.Storage.set('shikimori_refresh_token', response.refresh_token);
+                    Lampa.Noty.show('Авторизация в Shikimori успешна');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Ошибка получения токена:', error);
+                    Lampa.Noty.show('Ошибка авторизации в Shikimori');
+                }
+            });
+        }
+
+        self.start = function() {
+            // Запуск плагина
+        }
+
+        // Здесь будут другие методы
     }
 
-    Lampa.Template.add('shikimori_init_style', `
-        <style>
-        .modal--init-message {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-            background-color: rgba(0, 0, 0, 0.8);
-            border-radius: 5px;
-            padding: 20px;
-            color: white;
-            font-size: 1.2em;
-            text-align: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .modal--full {
-            opacity: 1;
-        }
-        .modal__content {
-            margin-bottom: 10px;
-        }
-        .modal__closer {
-            cursor: pointer;
-            padding: 5px;
-        }
-        .modal__closer:after {
-            content: '×';
-            font-size: 1.5em;
-        }
-        </style>
-    `);
-
-    function startPlugin() {
-        window.plugin_shikimori_ready = true;
-        
-        Lampa.Manifest.plugins['shikimori'] = {
-            type: "video",
-            version: "1.0.0",
-            name: "Shikimori",
-            description: "Anime catalog",
-            component: 'shikimori',
-        };
-
-        // Show the initialization popup
-        showInitializationPopup();
-    }
-
-    if (!window.plugin_shikimori_ready) startPlugin();
-
+    var shikimori = new ShikimoriPlugin();
+    Lampa.Plugins.add('shikimori', shikimori);
 })();
