@@ -83,8 +83,18 @@
                     var shikimoriButton = $('<div class="settings-folder selector" data-component="shikimori"><div class="settings-folder__icon">' + ShikimoriPlugin.icon + '</div><div class="settings-folder__name">Shikimori</div></div>');
                     
                     shikimoriButton.on('hover:enter', function(){
-                        Lampa.Settings.create('shikimori');
-                    });
+    if (Lampa.Settings && typeof Lampa.Settings.create === 'function') {
+        try {
+            Lampa.Settings.create('shikimori');
+        } catch (error) {
+            console.error('Error creating Shikimori settings:', error);
+            Lampa.Noty.show('Error: Unable to open Shikimori settings');
+        }
+    } else {
+        console.error('Lampa.Settings.create is not available');
+        Lampa.Noty.show('Error: Settings creation is not available');
+    }
+});
                     
                     settingsMenu.find('[data-component="more"]').before(shikimoriButton);
                 }
