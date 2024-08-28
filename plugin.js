@@ -1,10 +1,14 @@
 (function(){
     'use strict';
 
-    function ShikimoriPlugin() {
-        var self = this;
-
-        self.init = function() {
+    var ShikimoriPlugin = {
+        init: function() {
+            this.addSettingsTemplate();
+            this.addSettingsComponent();
+            this.registerSettings();
+        },
+        
+        addSettingsTemplate: function() {
             Lampa.Template.add('settings_shikimori', `
                 <div>
                     <div class="settings-param">
@@ -19,8 +23,10 @@
                     </div>
                 </div>
             `);
-
-            Lampa.Settings.listener.follow('open', function (e) {
+        },
+        
+        addSettingsComponent: function() {
+            Lampa.Settings.listener.follow('open', (e) => {
                 if (e.name == 'main') {
                     const field = $(Lampa.Lang.translate(`
                         <div class="settings-folder selector" data-component="shikimori">
@@ -43,7 +49,9 @@
                 icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.5 12C21.5 17.2467 17.2467 21.5 12 21.5C6.75329 21.5 2.5 17.2467 2.5 12C2.5 6.75329 6.75329 2.5 12 2.5C17.2467 2.5 21.5 6.75329 21.5 12Z" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
                 name: 'Shikimori'
             });
-
+        },
+        
+        registerSettings: function() {
             Lampa.Settings.register({
                 component: 'shikimori',
                 param: {
@@ -55,7 +63,7 @@
                     }
                 },
                 onStart: function(){},
-                onRender: function(item){
+                onRender: function(item) {
                     item.on('hover:enter', function(){
                         Lampa.Input.edit({
                             title: 'Введите ' + item.name,
@@ -77,14 +85,14 @@
                     if (item.param === 'client_secret') {
                         item.after($('<div class="settings-param selector" data-action="authorize"><div class="settings-param__name">Авторизоваться в Shikimori</div></div>'));
                         item.on('hover:enter', function(){
-                            self.authorize();
+                            ShikimoriPlugin.authorize();
                         });
                     }
                 }
             });
-        }
+        },
 
-        self.authorize = function() {
+        authorize: function() {
             var client_id = Lampa.Storage.get('shikimori_client_id');
             if (!client_id) {
                 Lampa.Noty.show('Пожалуйста, введите Client ID в настройках Shikimori');
@@ -103,27 +111,27 @@
                 ref.addEventListener('loadstart', function(event) {
                     if (event.url.indexOf(redirectUri) === 0) {
                         ref.close();
-                        var code = self.getParameterByName('code', event.url);
+                        var code = ShikimoriPlugin.getParameterByName('code', event.url);
                         if (code) {
-                            self.getToken(code);
+                            ShikimoriPlugin.getToken(code);
                         }
                     }
                 });
             } else {
                 window.open(authUrl, '_blank');
             }
-        }
+        },
 
-        self.getParameterByName = function(name, url) {
+        getParameterByName: function(name, url) {
             name = name.replace(/[\[\]]/g, '\\$&');
             var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
                 results = regex.exec(url);
             if (!results) return null;
             if (!results[2]) return '';
             return decodeURIComponent(results[2].replace(/\+/g, ' '));
-        }
+        },
 
-        self.getToken = function(code) {
+        getToken: function(code) {
             var client_id = Lampa.Storage.get('shikimori_client_id');
             var client_secret = Lampa.Storage.get('shikimori_client_secret');
             
@@ -152,15 +160,12 @@
                     Lampa.Noty.show('Ошибка авторизации в Shikimori');
                 }
             });
-        }
+        },
 
-        self.start = function() {
+        start: function() {
             // Запуск плагина
         }
+    };
 
-        // Здесь будут другие методы
-    }
-
-    var shikimori = new ShikimoriPlugin();
-    Lampa.Plugins.add('shikimori', shikimori);
+    ShikimoriPlugin.init();
 })();
