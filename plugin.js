@@ -3,93 +3,105 @@
 
     var ShikimoriPlugin = {
         init: function() {
-            this.addSettingsTemplate();
             this.addSettingsComponent();
             this.registerSettings();
         },
         
-        addSettingsTemplate: function() {
-            Lampa.Template.add('settings_shikimori', `
-                <div>
-                    <div class="settings-param">
-                        <div class="settings-param__name">Shikimori Client ID</div>
-                        <div class="settings-param__value"></div>
-                        <div class="settings-param__descr">Введите Client ID вашего приложения Shikimori</div>
-                    </div>
-                    <div class="settings-param">
-                        <div class="settings-param__name">Shikimori Client Secret</div>
-                        <div class="settings-param__value"></div>
-                        <div class="settings-param__descr">Введите Client Secret вашего приложения Shikimori</div>
-                    </div>
-                </div>
-            `);
-        },
-        
         addSettingsComponent: function() {
-            Lampa.Settings.listener.follow('open', (e) => {
-                if (e.name == 'main') {
-                    const field = $(Lampa.Lang.translate(`
-                        <div class="settings-folder selector" data-component="shikimori">
-                            <div class="settings-folder__icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M21.5 12C21.5 17.2467 17.2467 21.5 12 21.5C6.75329 21.5 2.5 17.2467 2.5 12C2.5 6.75329 6.75329 2.5 12 2.5C17.2467 2.5 21.5 6.75329 21.5 12Z" stroke="currentColor" stroke-width="2"/>
-                                    <path d="M12 7V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div class="settings-folder__name">Shikimori</div>
-                        </div>
-                    `));
-                    e.body.find('[data-component="more"]').after(field);
-                }
-            });
+            Lampa.Components.add('shikimori', this.settingsComponent);
 
-            Lampa.Settings.define('shikimori', {
-                component: 'shikimori',
-                template: 'settings_shikimori',
-                icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.5 12C21.5 17.2467 17.2467 21.5 12 21.5C6.75329 21.5 2.5 17.2467 2.5 12C2.5 6.75329 6.75329 2.5 12 2.5C17.2467 2.5 21.5 6.75329 21.5 12Z" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-                name: 'Shikimori'
-            });
-        },
-        
-        registerSettings: function() {
-            Lampa.Settings.register({
-                component: 'shikimori',
-                param: {
-                    client_id: {
-                        default: ''
-                    },
-                    client_secret: {
-                        default: ''
-                    }
-                },
-                onStart: function(){},
-                onRender: function(item) {
-                    item.on('hover:enter', function(){
-                        Lampa.Input.edit({
-                            title: 'Введите ' + item.name,
-                            value: Lampa.Storage.get('shikimori_' + item.param),
-                            free: true,
-                            nosave: true
-                        }, function(new_value){
-                            Lampa.Storage.set('shikimori_' + item.param, new_value);
-                            item.update();
+            Lampa.Listener.follow('app', (e)=>{
+                if(e.type == 'ready'){
+                    let button = $(`<li class="menu__item selector">
+                        <div class="menu__ico">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M21.5 12C21.5 17.2467 17.2467 21.5 12 21.5C6.75329 21.5 2.5 17.2467 2.5 12C2.5 6.75329 6.75329 2.5 12 2.5C17.2467 2.5 21.5 6.75329 21.5 12Z" stroke="currentColor" stroke-width="2"/>
+                                <path d="M12 7V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="menu__text">Shikimori</div>
+                    </li>`);
+                    
+                    button.on('hover:enter', () => {
+                        Lampa.Activity.push({
+                            url: '',
+                            title: 'Shikimori',
+                            component: 'shikimori',
+                            page: 1
                         });
                     });
 
-                    item.update = function(){
-                        item.find('.settings-param__value').text(Lampa.Storage.get('shikimori_' + item.param));
-                    };
-
-                    item.update();
-
-                    if (item.param === 'client_secret') {
-                        item.after($('<div class="settings-param selector" data-action="authorize"><div class="settings-param__name">Авторизоваться в Shikimori</div></div>'));
-                        item.on('hover:enter', function(){
-                            ShikimoriPlugin.authorize();
-                        });
-                    }
+                    $('.menu .menu__list').eq(0).append(button);
                 }
             });
+        },
+        
+        settingsComponent: {
+            type: 'plugin',
+            code: 'shikimori',
+            name: 'Shikimori',
+            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.5 12C21.5 17.2467 17.2467 21.5 12 21.5C6.75329 21.5 2.5 17.2467 2.5 12C2.5 6.75329 6.75329 2.5 12 2.5C17.2467 2.5 21.5 6.75329 21.5 12Z" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            
+            render: function(){
+                return `
+                    <div>
+                        <div class="settings-param selector" data-name="client_id" data-type="input" placeholder="Введите Client ID">
+                            <div class="settings-param__name">Shikimori Client ID</div>
+                            <div class="settings-param__value"></div>
+                            <div class="settings-param__descr">Введите Client ID вашего приложения Shikimori</div>
+                        </div>
+                        <div class="settings-param selector" data-name="client_secret" data-type="input" placeholder="Введите Client Secret">
+                            <div class="settings-param__name">Shikimori Client Secret</div>
+                            <div class="settings-param__value"></div>
+                            <div class="settings-param__descr">Введите Client Secret вашего приложения Shikimori</div>
+                        </div>
+                        <div class="settings-param selector" data-name="shikimori_auth">
+                            <div class="settings-param__name">Авторизоваться в Shikimori</div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            update: function(params){
+                params.find('[data-name="client_id"] .settings-param__value').text(Lampa.Storage.get('shikimori_client_id',''));
+                params.find('[data-name="client_secret"] .settings-param__value').text(Lampa.Storage.get('shikimori_client_secret',''));
+            },
+            
+            onRender: function(params){
+                params.find('[data-name="client_id"]').on('hover:enter', this.client_id_input);
+                params.find('[data-name="client_secret"]').on('hover:enter', this.client_secret_input);
+                params.find('[data-name="shikimori_auth"]').on('hover:enter', this.shikimori_auth);
+            },
+            
+            client_id_input: function(){
+                Lampa.Input.edit({
+                    title: 'Введите Client ID',
+                    value: Lampa.Storage.get('shikimori_client_id','')
+                }, function(new_value){
+                    Lampa.Storage.set('shikimori_client_id', new_value);
+                    Lampa.Settings.update();
+                });
+            },
+            
+            client_secret_input: function(){
+                Lampa.Input.edit({
+                    title: 'Введите Client Secret',
+                    value: Lampa.Storage.get('shikimori_client_secret','')
+                }, function(new_value){
+                    Lampa.Storage.set('shikimori_client_secret', new_value);
+                    Lampa.Settings.update();
+                });
+            },
+            
+            shikimori_auth: function(){
+                ShikimoriPlugin.authorize();
+            }
+        },
+        
+        registerSettings: function() {
+            Lampa.Settings.main.render().find('[data-component="more"]').after(
+                $('<div class="settings-folder selector" data-component="shikimori"><div class="settings-folder__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.5 12C21.5 17.2467 17.2467 21.5 12 21.5C6.75329 21.5 2.5 17.2467 2.5 12C2.5 6.75329 6.75329 2.5 12 2.5C17.2467 2.5 21.5 6.75329 21.5 12Z" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="settings-folder__name">Shikimori</div></div>')
+            );
         },
 
         authorize: function() {
