@@ -9,24 +9,14 @@
             console.log('ShikimoriPlugin init');
             Lampa.Component.add('shikimori', this.component);
 
-            this.addSettings();
             this.addMenuButton();
 
             Lampa.Listener.follow('app', function (e) {
                 if (e.type == 'ready') {
                     // Any additional initialization after app is ready
+                    ShikimoriPlugin.addSettings();
                 }
             });
-        },
-
-        addSettings: function() {
-            console.log('Adding Shikimori settings');
-            var settingsMenu = Lampa.Settings.main();
-            if (settingsMenu) {
-                var shikimoriButton = $('<div class="settings-folder selector" data-component="shikimori"><div class="settings-folder__icon">' + this.icon + '</div><div class="settings-folder__name">Shikimori</div></div>');
-                shikimoriButton.on('hover:enter', this.showSettings.bind(this));
-                settingsMenu.render().find('[data-component="more"]').before(shikimoriButton);
-            }
         },
 
         addMenuButton: function() {
@@ -36,9 +26,20 @@
             $('.menu .menu__list').eq(0).append(menu_item);
         },
 
+        addSettings: function() {
+            console.log('Adding Shikimori settings');
+            var settingsMenu = Lampa.Settings.main().render();
+            if (settingsMenu) {
+                var shikimoriButton = $('<div class="settings-folder selector" data-component="shikimori"><div class="settings-folder__icon">' + this.icon + '</div><div class="settings-folder__name">Shikimori</div></div>');
+                shikimoriButton.on('hover:enter', this.showSettings.bind(this));
+                settingsMenu.find('[data-component="more"]').before(shikimoriButton);
+            } else {
+                console.error('Settings menu not found.');
+            }
+        },
+
         showSettings: function() {
             console.log('Showing Shikimori settings');
-            Lampa.Settings.create('shikimori');
             var html = this.renderSettings();
             this.updateSettingsView(html);
             Lampa.Controller.enable('settings_component');
@@ -50,13 +51,13 @@
 
             html += '<div class="settings-param selector" data-name="shikimori_client_id" data-type="input" data-default="">';
             html += '<div class="settings-param__name">Shikimori Client ID</div>';
-            html += '<div class="settings-param__value"></div>';
+            html += '<div class="settings-param__value">' + (Lampa.Storage.get('shikimori_client_id') || '') + '</div>';
             html += '<div class="settings-param__descr">' + Lampa.Lang.translate('filmix_param_placeholder') + '</div>';
             html += '</div>';
 
             html += '<div class="settings-param selector" data-name="shikimori_client_secret" data-type="input" data-default="">';
             html += '<div class="settings-param__name">Shikimori Client Secret</div>';
-            html += '<div class="settings-param__value"></div>';
+            html += '<div class="settings-param__value">' + (Lampa.Storage.get('shikimori_client_secret') || '') + '</div>';
             html += '<div class="settings-param__descr">' + Lampa.Lang.translate('filmix_param_placeholder') + '</div>';
             html += '</div>';
 
@@ -68,15 +69,11 @@
             console.log('Updating settings view');
             $('.settings__content').empty().append(html);
 
-            var clients = $('.settings-param__value', html);
-            clients.eq(0).text(Lampa.Storage.get('shikimori_client_id') || '');
-            clients.eq(1).text(Lampa.Storage.get('shikimori_client_secret') || '');
-
-            $('.selector[data-name="shikimori_client_id"]', html).on('hover:enter', function () {
+            $('.selector[data-name="shikimori_client_id"]').on('hover:enter', function () {
                 this.editClientSettings('shikimori_client_id');
             }.bind(this));
 
-            $('.selector[data-name="shikimori_client_secret"]', html).on('hover:enter', function () {
+            $('.selector[data-name="shikimori_client_secret"]').on('hover:enter', function () {
                 this.editClientSettings('shikimori_client_secret');
             }.bind(this));
         },
