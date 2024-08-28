@@ -14,7 +14,7 @@
         },
 
         addMenuButton: function() {
-            var menu = Lampa.Menu.main().render();
+            var menu = Lampa.Menu.render();
             menu.find('[data-action="settings"]').after(
                 '<li class="menu__item selector" data-action="shikimori">'+
                     '<div class="menu__ico">' + ShikimoriPlugin.icon + '</div>'+
