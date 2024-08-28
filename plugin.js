@@ -9,6 +9,7 @@
             console.log('ShikimoriPlugin init');
             Lampa.Component.add('shikimori', this.component);
 
+            this.registerTemplate();
             this.addMenuButton();
 
             Lampa.Listener.follow('app', function (e) {
@@ -17,6 +18,11 @@
                     ShikimoriPlugin.addSettings();
                 }
             });
+        },
+
+        registerTemplate: function() {
+            console.log('Registering settings_shikimori template');
+            Lampa.Template.add('settings_shikimori', this.renderSettings());
         },
 
         addMenuButton: function() {
@@ -40,13 +46,13 @@
 
         showSettings: function() {
             console.log('Showing Shikimori settings');
-            var html = this.renderSettings();
+            var html = Lampa.Template.get('settings_shikimori', {});
             this.updateSettingsView(html);
             Lampa.Controller.enable('settings_component');
         },
 
         renderSettings: function() {
-            console.log('Rendering Shikimori settings');
+            console.log('Rendering Shikimori settings template');
             var html = '<div>';
 
             html += '<div class="settings-param selector" data-name="shikimori_client_id" data-type="input" data-default="">';
