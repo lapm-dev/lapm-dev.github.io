@@ -1,5 +1,5 @@
 # 🍿 Shikimori Plugin for Lampa
-
+# It's not ready yet. The functionality is not working and is not stable. This is an experiment of working with Lampa and Claude 3.5 Sonnet. 
 ## 📝 Description
 
 This plugin integrates Shikimori functionality into the Lampa online cinema platform. It allows users to automatically track their anime watching progress on Shikimori directly from Lampa.
