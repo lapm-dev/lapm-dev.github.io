@@ -5,6 +5,16 @@
         component: 'shikimori',
         name: 'Shikimori',
         icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.5 12C21.5 17.2467 17.2467 21.5 12 21.5C6.75329 21.5 2.5 17.2467 2.5 12C2.5 6.75329 6.75329 2.5 12 2.5C17.2467 2.5 21.5 6.75329 21.5 12Z" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        manifest: {
+            name: 'Shikimori',
+            author: 'dmitry.tsynik',
+            version: '1.0.0',
+            description: 'Плагин для интеграции с Shikimori',
+            icons: {
+                '16': 'img/icons/plugins/shikimori-16.png',
+                '128': 'img/icons/plugins/shikimori-128.png',
+            },
+        },
 
         init: function() {
             Lampa.Template.add('settings_' + this.component, this.getTemplate());
@@ -35,11 +45,25 @@
         },
 
         addSettings: function() {
-            Lampa.SettingsApi.addComponent({
+            Lampa.Settings.add({
                 component: this.component,
-                icon: this.icon,
-                name: this.name,
-            });
+                category: 'plugins',
+                translate(key, to){
+                    let result = Lampa.Lang.translate(key)
+
+                    if(result.indexOf('#{') >= 0){
+                        return result.replace(/#{([a-z_0-9-]+)}/g, function(e,s){
+                            return Lampa.Lang.translate(s) || s
+                        })
+                    }
+                    else return result
+                },
+                title: this.name,
+                body: this.getTemplate(),
+                onBack: ()=>{
+                    Lampa.Controller.toggle('settings');
+                }
+            })
 
             Lampa.SettingsApi.addParam({
                 component: this.component,
@@ -75,7 +99,7 @@
                 field: {
                     name: '#{shikimori_auth_add_descr}'
                 },
-                onChange: this.authorize 
+                onChange: this.authorize
             });
         },
 
@@ -143,11 +167,7 @@
         }
     });
 
-    Lampa.Listener.follow('app', (e) => {
-        if (e.type == 'ready') {
-            Lampa.Component.add('shikimori', ShikimoriPlugin); 
-        }
-    });
+    Lampa.Component.add('shikimori', ShikimoriPlugin);
 
     window.plugin_shikimori_ready = true;
 })();
