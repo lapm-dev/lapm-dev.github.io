@@ -35,26 +35,49 @@
         },
 
         addSettings: function() {
-            Lampa.Settings.main().render().find('[data-component="more"]').after(
-                `<div class="settings-folder selector" data-component="${this.component}">
-                    <div class="settings-folder__icon">${this.icon}</div>
-                    <div class="settings-folder__name">${this.name}</div>
-                </div>`
-            );
-            
-            Lampa.Settings.listener.follow('open', (e) => {
-                if (e.name == 'main') {
-                    e.body.find(`[data-component="${this.component}"]`).on('hover:enter', () => {
-                        Lampa.Settings.create({
-                            name: this.component,
-                            translate: this.name,
-                            icon: this.icon,
-                            component: this.component
-                        });
+            // Используем Lampa.SettingsApi для добавления настроек
+            Lampa.SettingsApi.addComponent({
+                component: this.component,
+                icon: this.icon,
+                name: this.name,
+            });
 
-                        setTimeout(() => this.updateValues(), 100);
-                    });
+            // Добавляем параметры настроек, используя Lampa.SettingsApi
+            Lampa.SettingsApi.addParam({
+                component: this.component,
+                param: {
+                    type: 'input',
+                    name: 'shikimori_client_id',
+                    placeholder: '#{filmix_param_placeholder}'
+                },
+                field: {
+                    name: 'Shikimori Client ID'
                 }
+            });
+
+            Lampa.SettingsApi.addParam({
+                component: this.component,
+                param: {
+                    type: 'input',
+                    name: 'shikimori_client_secret',
+                    placeholder: '#{filmix_param_placeholder}'
+                },
+                field: {
+                    name: 'Shikimori Client Secret'
+                }
+            });
+
+            Lampa.SettingsApi.addParam({
+                component: this.component,
+                param: {
+                    type: 'button',
+                    static: true,
+                    name: 'shikimori_auth'
+                },
+                field: {
+                    name: '#{shikimori_auth_add_descr}'
+                },
+                onChange: this.authorize // Вызываем метод authorize при клике на кнопку
             });
         },
 
@@ -104,7 +127,7 @@
             Lampa.Noty.show('Please open this URL to authorize: ' + authUrl);
         },
 
-        // Add start, pause, stop, and render methods here as needed
+        // Добавьте методы start, pause, stop, и render здесь, если необходимо
     };
 
     Lampa.Lang.add({
