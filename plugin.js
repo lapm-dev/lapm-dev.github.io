@@ -149,9 +149,11 @@
         }
     });
 
-    setTimeout(() => {
-        Lampa.Component.add('shikimori', ShikimoriPlugin);
-    }, 3000); // Задержка в 1 секунду
+  Lampa.Listener.follow('app', (e) => {
+    if (e.type == 'ready') {
+        Lampa.Component.add('shikimori', ShikimoriPlugin); 
+    }
+});
 
     window.plugin_shikimori_ready = true;
 })();
