@@ -35,39 +35,37 @@
         },
 
         addSettings: function() {
-            Lampa.Settings.listener.follow('open', (e) => {
-                if (e.name == 'main') {
-                    setTimeout(() => {
-                        if (Lampa.Settings.main().render().find('[data-component="shikimori"]').length == 0) {
-                            let field = $(`<div class="settings-folder selector" data-component="${this.component}">
-                                <div class="settings-folder__icon">${this.icon}</div>
-                                <div class="settings-folder__name">${this.name}</div>
-                            </div>`);
-                            Lampa.Settings.main().render().find('[data-component="more"]').after(field);
-                            Lampa.Settings.main().update();
-                        }
-                    }, 10);
-                }
-            });
-
+            Lampa.Settings.main().render().find('[data-component="more"]').after(
+                `<div class="settings-folder selector" data-component="${this.component}">
+                    <div class="settings-folder__icon">${this.icon}</div>
+                    <div class="settings-folder__name">${this.name}</div>
+                </div>`
+            );
+            
             Lampa.Settings.listener.follow('open', (e) => {
                 if (e.name == 'main') {
                     e.body.find(`[data-component="${this.component}"]`).on('hover:enter', () => {
-                        this.settings();
+                        Lampa.Settings.create({
+                            name: this.component,
+                            translate: this.name,
+                            icon: this.icon,
+                            component: this.component
+                        });
+
+                        setTimeout(() => this.updateValues(), 100);
                     });
                 }
             });
         },
 
-        settings: function() {
-            Lampa.Settings.create({
-                name: this.component,
-                icon: this.icon,
-                components: [ this.component ],
-                onRender: (page) => {
-                    page.showComponent(this.component);
-                }
+        updateValues: function() {
+            let body = Lampa.Settings.main().render();
+            ['shikimori_client_id', 'shikimori_client_secret'].forEach(name => {
+                let value = Lampa.Storage.get(name, '');
+                body.find(`[data-name="${name}"] .settings-param__value`).text(value);
             });
+
+            body.find('[data-name="shikimori_auth"]').on('hover:enter', this.authorize);
         },
 
         addMenuButton: function() {
@@ -130,13 +128,5 @@
 
     Lampa.Component.add('shikimori', ShikimoriPlugin);
 
-    Lampa.Manifest.plugins['shikimori'] = {
-        type: 'video',
-        version: '1.0',
-        name: 'Shikimori',
-        description: 'Plugin for Shikimori integration',
-        component: 'shikimori'
-    };
-
-    ShikimoriPlugin.init();
+    window.plugin_shikimori_ready = true;
 })();
