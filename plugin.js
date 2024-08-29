@@ -35,14 +35,12 @@
         },
 
         addSettings: function() {
-            // Используем Lampa.SettingsApi для добавления настроек
             Lampa.SettingsApi.addComponent({
                 component: this.component,
                 icon: this.icon,
                 name: this.name,
             });
 
-            // Добавляем параметры настроек, используя Lampa.SettingsApi
             Lampa.SettingsApi.addParam({
                 component: this.component,
                 param: {
@@ -77,7 +75,7 @@
                 field: {
                     name: '#{shikimori_auth_add_descr}'
                 },
-                onChange: this.authorize // Вызываем метод authorize при клике на кнопку
+                onChange: this.authorize 
             });
         },
 
@@ -98,12 +96,8 @@
             </li>`);
 
             button.on('hover:enter', () => {
-                Lampa.Activity.push({
-                    url: '',
-                    title: 'Shikimori',
-                    component: 'shikimori',
-                    page: 1
-                });
+                // Здесь можно добавить действие при наведении на кнопку меню, если необходимо
+                // Например, открыть страницу профиля пользователя Shikimori
             });
 
             $('.menu .menu__list').eq(0).append(button);
@@ -125,9 +119,9 @@
                 '&scope=user_rates+comments+topics';
 
             Lampa.Noty.show('Please open this URL to authorize: ' + authUrl);
-        },
 
-        // Добавьте методы start, pause, stop, и render здесь, если необходимо
+            // Здесь можно добавить код для обработки полученного кода авторизации и получения токена доступа
+        }
     };
 
     Lampa.Lang.add({
@@ -149,11 +143,11 @@
         }
     });
 
-  Lampa.Listener.follow('app', (e) => {
-    if (e.type == 'ready') {
-        Lampa.Component.add('shikimori', ShikimoriPlugin); 
-    }
-});
+    Lampa.Listener.follow('app', (e) => {
+        if (e.type == 'ready') {
+            Lampa.Component.add('shikimori', ShikimoriPlugin); 
+        }
+    });
 
     window.plugin_shikimori_ready = true;
 })();
